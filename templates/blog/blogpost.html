@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Blog Post{% endblock %}
+
+{% block blogactive %} active {% endblock blogactive%}
+
+{% block body %}
+{% load humanize %}
+{% load extras %}v
+<!-- {% load static %} -->
+<div class="container my-3">
+    <article class="blog-post">
+        <h2 class="blog-post-title">{{blogPost.title}}</h2>
+        <p class="blog-post-meta mb-0">{{blogPost.timestamp}} by <a href="/about">{{blogPost.author}}</a></p>
+        <p><b>Genre: </b>{{blogPost.genre}} (<span >{{blogPost.views}} views</span>)</p>
+        <hr>
+        <p>{{blogPost.content}}</p>
+    </article>
+    <hr>
+</div>
+<div class="container">
+    <h4>Comments: ({{comments.count}})</h4>
+    <div class="my-2">
+        {% if user.is_authenticated %}
+        <form action="/blog/postcomment/post" method="POST" class="d-flex mx-3"> {% csrf_token %}
+            <input class="form-control me-2" type="text" name="comment" id="comment"
+                placeholder="Enter your comment here">
+            <input type="hidden" name="postSno" value="{{blogPost.sno}}">
+            <input type="hidden" name="parentSno" value="">
+            <button class="btn btn-primary" type="submit">Submit</button>
+        </form>
+        {% else %}
+        <p>Please login to post comments here</p>
+        {% endif %}
+    </div>
+    {% for i in comments %}
+    <div class="row my-3">
+        <div class="col-md-1">
+            <img class="rounded mx-auto d-block w-100 p-2 border border-dark" src="/static/img/user.png"
+                alt="user image">
+        </div>
+        <div class="col-md-11">
+            <b>{{i.user.username}}</b> {{i.timestamp | naturaltime}}
+            <div>
+                {{i.comment}}
+            </div>
+            <div class="reply">
+                {% if user.is_authenticated %}
+                <button class="btn-sm btn-primary" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#replyBox{{i.sno}}" aria-expanded="false" aria-controls="replyBox{{i.sno}}">
+                    Reply
+                </button>
+                <div class="collapse" id="replyBox{{i.sno}}">
+                    <div class="card card-body">
+                        <form action="/blog/postcomment/post" method="POST" class="d-flex mx-3"> {% csrf_token %}
+                            <input class="form-control me-2" type="text" name="comment" id="reply"
+                                placeholder="Enter your reply here">
+                            <input type="hidden" name="parentSno" value="{{i.sno}}">
+                            <input type="hidden" name="postSno" value="{{blogPost.sno}}">
+                            <button class="btn btn-primary" type="submit">Submit</button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <button class="btn-sm btn-primary" type="button" aria-expanded="false" disabled>
+                    Login to Reply
+                </button>
+                {% endif %}
+                <div class="replies my-3">
+                    <h5>Replies:</h5>
+                    {% for reply in replyDict|get_val:i.sno %}
+                    <div class="row my-2">
+                        <div class="col-md-1">
+                            <img class="rounded mx-auto d-block w-75 p-2 border border-dark" src="/static/img/user.png"
+                                alt="user image">
+                        </div>
+                        <div class="col-md-11">
+                            <b>{{reply.user.username}}</b> {{reply.timestamp | naturaltime}}
+                            <div>
+                                {{reply.comment}}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock body %}
